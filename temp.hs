@@ -14,12 +14,11 @@ import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
 
 
-{-# LANGUAGE OverlappingInstances, GeneralizedNewtypeDeriving #-}
-
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 ---------------------------------
 --- Request stuff
 ---------------------------------
-data DirectionsRequest = DirectionsRequest {
+data DirectionsRequestfromJust  = DirectionsRequest {
                            origin :: String,
                            destination :: String
                          } deriving (Show)
@@ -76,16 +75,16 @@ handleE _ (Right v) = return v
 ---------------------------------
 newtype DirectionsResponse = DirectionsResponse { locations :: [Location] }
 
-newtype Interval = Interval { seconds :: Int } deriving (Num)
+newtype Interval = Interval { seconds :: Int } deriving (Eq, Ord, Num)
 
 instance Show Interval where
   show (Interval s) = printf "%dh%m" (fst hoursMins) (snd hoursMins)
                       where hoursMins = divMod 60 s
 
-newtype Miles = Miles { feet :: Int } deriving (Num)
+newtype Miles = Miles { feet :: Int } deriving (Eq, Ord, Num)
 
 instance Show Miles where
-  show (Miles f) = printf "%.1f" (f / 5280)
+  show (Miles f) = printf "%.1f" ((fromIntegral f) / 5280.0)
 
 data Location = Location {
                            distance :: Miles,
@@ -97,6 +96,10 @@ data Location = Location {
 doIt :: String -> String -> IO [(String, String)]
 doIt o d = fmap parseJSON (get (DirectionsRequest o d))
 
-toResponse :: [(String, String)] -> DirectionsResponse
-toResponse = DirectionsResponse { locations = parseLocations}
-             where parseLocations = fromJust $ lookup 
+-- FIXME: lol this so doesn't parse. i need a better way to traverse the json object
+getLocation :: [(String, String)] -> Location
+getLocation ps = Location {distance = getDist fstRoute, duration = getDur fstRoute, name = getName fstRoute}
+  where fstRoute   = (head . fromJust .) . lookup "routes" ps
+        getDist xs =  Miles $ sum (toIntegral $ fromJust $ lookup "value" )$ lookup "duration" `fmap` $ lookup "legs" xs -- this should be a [[(String, String)]]
+        getDur   = undefined
+        getName  =  undefined
