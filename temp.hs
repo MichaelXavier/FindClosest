@@ -18,7 +18,7 @@ import System.IO (hPutStrLn, stderr)
 ---------------------------------
 --- Request stuff
 ---------------------------------
-data DirectionsRequestfromJust  = DirectionsRequest {
+data DirectionsRequest = DirectionsRequest {
                            origin :: String,
                            destination :: String
                          } deriving (Show)

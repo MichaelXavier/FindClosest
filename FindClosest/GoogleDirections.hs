@@ -3,5 +3,5 @@ module Google
 -----------------------------------------
 -- Includes
 -----------------------------------------
-include Text.JSON
-include Network.HTTP
+import Text.JSON
+import Network.HTTP

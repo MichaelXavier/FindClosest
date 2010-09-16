@@ -1,5 +1,5 @@
 -----------------------------------
---- Includes
+--- Imports
 -----------------------------------
 import Text.JSON
 
@@ -42,8 +42,8 @@ instance JSON Route where
 
 
 data Leg = Leg {
-                 duration::Int,
-                 distance::Int,
+                 duration::TextValue,
+                 distance::TextValue,
                  endAddress::String
                } deriving (Eq, Show)
 
@@ -58,17 +58,33 @@ instance JSON Leg where
       --TODO: can't get the types to work out here
   readJSON (JSObject obj) = let
       hash = fromJSObject obj
-      value = mLookup "value" hash >>= readJSON
     in do
-      r_duration    <- mLookup "duration" value >>= readJSON
-      r_distance    <- mLookup "distance" value >>= readJSON
-      r_end_address <- mLookup "end_address" value >>= readJSON
+      r_duration    <- mLookup "duration" hash >>= readJSON
+      r_distance    <- mLookup "distance" hash >>= readJSON
+      r_end_address <- mLookup "end_address" hash >>= readJSON
       return $ Leg 
         { duration   = r_duration,
           distance   = r_distance,
           endAddress = r_end_address }
 
   readJSON _ = fail ""
+
+data TextValue = TextValue {
+                             text::String,
+                             value::Int
+                           } deriving (Eq, Show)
+
+instance JSON TextValue where
+  showJSON t = makeObj
+    [ ("text", showJSON $ text t),
+      ("value", showJSON $ value t) ]
+
+  readJSON (JSObject obj) = let
+      hash = fromJSObject obj
+    in do
+      r_text <- mLookup "text" hash >>= readJSON
+      r_value <- mLookup "value" hash >>= readJSON
+      return $ TextValue { text = r_text, value = r_value }
 
 -----------------------------------
 --- Helpers
