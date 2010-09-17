@@ -10,7 +10,9 @@ import Data.Maybe (fromJust)
 import Data.URLEncoded (importList, addToURI, URLEncoded)
 import Data.Maybe (fromJust)
 
---{-# LANGUAGE OverlappingInstances #-}
+import Google.DirectionsResponse (DirectionSummary, summarizeResponse, ParsedResponse, readResponse)
+
+{-# LANGUAGE OverlappingInstances #-}
 
 data DirectionsRequest = DirectionsRequest {
                            origin::String,
@@ -35,3 +37,23 @@ toRequest dr =  Request {
                           rqHeaders = [],
                           rqBody    = ""
                         }
+
+get :: DirectionsRequest -> IO String
+get dr = do
+    eresp <- simpleHTTP (toRequest dr)
+    resp <- handleE (err . show) eresp
+    case rspCode resp of
+                      (2,0,0) -> return (rspBody resp)
+                      _ -> err (httpError resp)
+    where
+    showRspCode (a,b,c) = map intToDigit [a,b,c]
+    httpError resp = showRspCode (rspCode resp) ++ " " ++ rspReason resp
+
+handleE :: Monad m => (ConnError -> m a) -> Either ConnError a -> m a
+handleE h (Left e) = h e
+handleE _ (Right v) = return v
+
+err :: String -> IO a
+err msg = do 
+	  hPutStrLn stderr msg
+	  exitFailure

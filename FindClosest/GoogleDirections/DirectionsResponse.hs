@@ -1,6 +1,7 @@
 module Google.DirectionsResponse (
                                    DirectionSummary,
-                                   summarizeResponse
+                                   summarizeResponse,
+                                   ParsedResponse
                                  )
 
 -----------------------------------
@@ -19,6 +20,15 @@ data DirectionsSummary = DirectionsSummary {
                                              duration::Seconds,
                                              distance::Meters,
                                            }
+instance Ord DirectionsSummary where
+  compare = compare . duration
+
+instance Show DirectionsSummary where
+  show = intersperse "\n" $ zipWith ((++) . show) ["Location: ", "Duration: ", "Distance"]
+
+-- figure out how to decode and lift the response out of the Result
+readResponse :: String -> ParsedResponse
+readResponse = fmap . decode --FIXME: yeah right like its going to let me do that
 
 summarizeResponse :: ParsedResponse -> DirectionsSummary
 summarizeResponse r = DirectionsSummary {
